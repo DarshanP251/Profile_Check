@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Profile Management</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="../css/profiles.css">
+</head>
+<body>
+
+<div class="container">
+
+  <header>
+    <h1>Profile Management</h1>
+    <p>Add profiles manually or upload them in bulk using CSV.</p>
+  </header>
+
+  <!-- Actions -->
+  <section class="actions">
+
+    <!-- Manual Entry -->
+    <div class="card">
+      <h3>Manual Entry</h3>
+      <form id="manualForm">
+        <input id="name" placeholder="Full Name" required>
+        <input id="dob" type="date" required>
+        <select id="gender" required>
+          <option value="">Gender</option>
+          <option>Male</option>
+          <option>Female</option>
+          <option>Other</option>
+        </select>
+        <input id="email" type="email" placeholder="Email" required>
+        <input id="mobile" placeholder="Mobile Number" required>
+        <button type="submit">Add Profile</button>
+      </form>
+    </div>
+
+    <!-- Bulk Upload -->
+    <div class="card">
+      <h3>Bulk Upload</h3>
+      <p class="muted">Download the template, add records, upload CSV.</p>
+
+      <div class="bulk-actions">
+        <button class="outline" onclick="downloadTemplate()">Download CSV Template</button>
+        <input type="file" id="csvFile" accept=".csv">
+        <button onclick="uploadCSV()">Upload CSV</button>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- Results -->
+  <section class="results">
+
+    <div class="success">
+      <h4>Successfully Inserted</h4>
+      <table>
+        <thead>
+          <tr><th>Name</th><th>Email</th></tr>
+        </thead>
+        <tbody id="successBody"></tbody>
+      </table>
+    </div>
+
+    <div class="error">
+      <h4>Failed Records</h4>
+      <table>
+        <thead>
+          <tr><th>Row</th><th>Reason</th></tr>
+        </thead>
+        <tbody id="errorBody"></tbody>
+      </table>
+    </div>
+
+  </section>
+
+</div>
+
+<script>
+/* ---------- CSV TEMPLATE DOWNLOAD ---------- */
+function downloadTemplate() {
+  const csv = "Name,DOB,Gender,Email,Mobile\n";
+  const blob = new Blob([csv], { type: "text/csv" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "profile_template.csv";
+  link.click();
+}
+
+/* ---------- MANUAL ENTRY ---------- */
+document.getElementById("manualForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const payload = {
+    name: document.getElementById("name").value.trim(),
+    dob: document.getElementById("dob").value,
+    gender: document.getElementById("gender").value,
+    email: document.getElementById("email").value.trim(),
+    mobile: document.getElementById("mobile").value.trim()
+  };
+
+  if (!payload.name || !payload.dob || !payload.gender || !payload.email || !payload.mobile) {
+    alert("All fields are required");
+    return;
+  }
+
+  try {
+    const res = await fetch("http://localhost:5000/api/profiles/add", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.error || "Insert failed");
+      return;
+    }
+
+    addSuccess(data.data.name, data.data.email);
+    e.target.reset();
+
+  } catch (err) {
+    alert("Backend not reachable");
+  }
+});
+
+/* ---------- CSV UPLOAD ---------- */
+async function uploadCSV() {
+  const file = document.getElementById("csvFile").files[0];
+  if (!file) return alert("Please select a CSV file");
+
+  const formData = new FormData();
+  formData.append("file", file);
+
+  try {
+    const res = await fetch("http://localhost:5000/api/profiles/upload", {
+      method: "POST",
+      body: formData
+    });
+
+    const data = await res.json();
+
+    successBody.innerHTML = "";
+    errorBody.innerHTML = "";
+
+    data.success.forEach(r => addSuccess(r.name, r.email));
+    data.failed.forEach(r => addError(r.row, r.reason));
+
+  } catch (err) {
+    alert("Backend not reachable");
+  }
+}
+
+/* ---------- UI HELPERS ---------- */
+function addSuccess(name, email) {
+  document.getElementById("successBody").innerHTML +=
+    `<tr><td>${name}</td><td>${email}</td></tr>`;
+}
+
+function addError(row, reason) {
+  document.getElementById("errorBody").innerHTML +=
+    `<tr><td>${row}</td><td>${reason}</td></tr>`;
+}
+</script>
+
+</body>
+</html>
