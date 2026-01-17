@@ -44,7 +44,7 @@
       <div class="bulk-actions">
         <button class="outline" onclick="downloadTemplate()">Download CSV Template</button>
         <input type="file" id="csvFile" accept=".csv">
-        <button onclick="uploadCSV()">Upload CSV</button>
+        <button type="button" onclick="uploadCSV()">Upload CSV</button>
       </div>
     </div>
 
@@ -106,7 +106,7 @@ document.getElementById("manualForm").addEventListener("submit", async (e) => {
   }
 
   try {
-    const res = await fetch("https://profile-check-09ez.onrender.com/api/profiles/add", {
+    const res = await fetch("/api/profiles/add", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
@@ -136,15 +136,15 @@ async function uploadCSV() {
   formData.append("file", file);
 
   try {
-    const res = await fetch("https://profile-check-09ez.onrender.com/api/profiles/upload", {
+    const res = await fetch("/api/profiles/upload", {
       method: "POST",
       body: formData
     });
 
     const data = await res.json();
 
-    successBody.innerHTML = "";
-    errorBody.innerHTML = "";
+    document.getElementById("successBody").innerHTML = "";
+    document.getElementById("errorBody").innerHTML = "";
 
     data.success.forEach(r => addSuccess(r.name, r.email));
     data.failed.forEach(r => addError(r.row, r.reason));
