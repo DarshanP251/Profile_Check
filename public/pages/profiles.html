@@ -106,7 +106,7 @@ document.getElementById("manualForm").addEventListener("submit", async (e) => {
   }
 
   try {
-    const res = await fetch("http://localhost:5000/api/profiles/add", {
+    const res = await fetch("https://profile-check-09ez.onrender.com/api/profiles/add", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
@@ -136,7 +136,7 @@ async function uploadCSV() {
   formData.append("file", file);
 
   try {
-    const res = await fetch("http://localhost:5000/api/profiles/upload", {
+    const res = await fetch("https://profile-check-09ez.onrender.com/api/profiles/upload", {
       method: "POST",
       body: formData
     });
